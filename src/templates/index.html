@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Parser</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #337ab7;
+            margin-bottom: 30px;
+        }
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px dashed #ccc;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        .upload-form label {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        .upload-form input::-webkit-file-upload-button {
+            background-color: #337ab7;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .upload-form input::file-selector-button {
+            background-color: #337ab7;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .upload-form button {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .upload-form button:hover {
+            background-color: #4cae4c;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        .results h2 {
+            color: #337ab7;
+            margin-top: 0;
+        }
+        .results pre {
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #eee;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #777;
+            margin-top: 20px;
+        }
+        .error-message {
+            color: #d9534f;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #d9534f;
+            border-radius: 4px;
+            background-color: #fdecea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Resume Information Extractor</h1>
+
+        <div class="upload-form">
+            <label for="fileInput">Select a Resume File (.pdf or .docx):</label>
+            <input type="file" id="fileInput" accept=".pdf,.docx">
+            <button onclick="uploadFile()">Analyze Resume</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <img src="https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif" alt="Loading..." style="height: 24px;">
+            <p>Processing, please wait...</p>
+        </div>
+
+        <div id="results" class="results" style="display: none;">
+            <h2>Extracted Information:</h2>
+            <pre id="parsedData"></pre>
+        </div>
+
+        <div id="error-message" class="error-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
+            const resultsDiv = document.getElementById('results');
+            const parsedDataPre = document.getElementById('parsedData');
+            const loadingDiv = document.getElementById('loading');
+            const errorMessageDiv = document.getElementById('error-message');
+
+            if (!file) {
+                alert("Please select a resume file.");
+                return;
+            }
+
+            loadingDiv.style.display = 'flex';
+            resultsDiv.style.display = 'none';
+            errorMessageDiv.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/parse', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+
+                loadingDiv.style.display = 'none';
+
+                if (response.ok) {
+                    parsedDataPre.textContent = JSON.stringify(data, null, 4);
+                    resultsDiv.style.display = 'block';
+                } else {
+                    errorMessageDiv.textContent = `Error: ${data.error}`;
+                    errorMessageDiv.style.display = 'block';
+                }
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                errorMessageDiv.textContent = 'An error occurred while connecting to the server.';
+                errorMessageDiv.style.display = 'block';
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
